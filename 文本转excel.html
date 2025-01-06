@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Text to Excel Converter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  </head>
+  <body>
+    <h1>将内容转换为 Excel</h1>
+    <div>
+      <button onclick="processFile()">转换为Excel</button>
+    </div>
+    <textarea style="width: 600px;" id="textarea" rows="30"></textarea>
+    <!-- <input type="file" id="fileInput" accept=".doc" /> -->
+    <script>
+      function processFile() {
+        const dom = document.getElementById("textarea");
+        const lines = dom.value.split("\n").filter((item) => item);
+        const data = [];
+        lines.forEach((line) => {
+          // 使用正则表达式解析行内容
+          const match = line.match(/^(.+?)\s*\[(.+?)\]$/);
+          if (match) {
+            const word = match[1].trim();
+            const pronunciation = match[2].trim();
+            data.push([word, pronunciation]);
+          }else{
+            data.push(['', '']);
+          }
+        });
+
+        // 使用xlsx.js生成Excel文件
+        const worksheet = XLSX.utils.aoa_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+
+        // 下载Excel文件
+        XLSX.writeFile(workbook, "Words.xlsx");
+
+        return;
+
+        const fileInput = document.getElementById("fileInput");
+        const file = fileInput.files[0];
+
+        if (!file) {
+          alert("请选择一个文件");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          // 使用 TextDecoder 解码，假设文件使用UTF-8编码
+          debugger;
+          const decoder = new TextDecoder("utf-16");
+          const content = decoder.decode(event.target.result);
+        };
+
+        reader.readAsArrayBuffer(file); // 使用ArrayBuffer读取文件内容
+      }
+    </script>
+  </body>
+</html>

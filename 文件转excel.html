@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File to Excel Converter</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+  <h1>选择一个文件并转换为 Excel</h1>
+  <input type="file" id="fileInput" />
+  <button onclick="processFile()">转换为Excel</button>
+
+  <script>
+    function processFile() {
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        alert('请选择一个文件');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        // 使用 TextDecoder 解码，假设文件使用UTF-8编码
+        const decoder = new TextDecoder('utf-8');
+        const content = decoder.decode(event.target.result);
+        const lines = content.split('\r');
+        const data = [['单词', '音标', '词类', '释义']];
+
+        debugger;
+
+        lines.forEach(line => {
+          // 使用正则表达式解析行内容
+          const match = line.match(/^(.+?)\s+\/(.+?)\/\s+(.+?)\s+(.+)$/);
+          if (match) {
+            const word = match[1];
+            const pronunciation = match[2];
+            const wordClass = match[3];
+            const meaning = match[4];
+            data.push([word, pronunciation, wordClass, meaning]);
+          }
+        });
+
+        // 使用xlsx.js生成Excel文件
+        const worksheet = XLSX.utils.aoa_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+        
+        // 下载Excel文件
+        XLSX.writeFile(workbook, 'Words.xlsx');
+      };
+      
+      reader.readAsArrayBuffer(file);  // 使用ArrayBuffer读取文件内容
+    }
+  </script>
+</body>
+</html>

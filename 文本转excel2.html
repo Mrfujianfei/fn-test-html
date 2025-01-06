@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF 转 Excel（复杂格式）</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+
+<body>
+  <h1>文本 转 Excel</h1>
+  <button onclick="convertPDF()">转换为Excel</button>
+  <br >
+  <textarea style="width: 600px;" id="textarea" rows="30"></textarea>
+
+  <script>
+    async function convertPDF() {
+      const dom = document.getElementById("textarea");
+      const content = dom.value.replace(/\n/g,'').replace(/([\u4e00-\u9fa5])([^\u4e00-\u9fa5])([^\u4e00-\u9fa5])/g, '$1\n$2$3');
+      // 解析文本内容
+      const data = parseText(content);
+      // 转换为 Excel 并下载
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Words');
+      XLSX.writeFile(wb, '单词表.xlsx');
+    }
+
+    // 解析复杂文本的函数
+    function parseText(text) {
+      const lines = text.split('\n');
+      const data = [['单词', '音标', '词性', '中文意思']];
+
+      let currentWord = '';
+      let currentPronunciation = '';
+      let currentType = '';
+      let currentMeaning = '';
+
+      lines.forEach(line => {
+        // 匹配单词
+        const wordMatch = line.match(/^[a-zA-Z\-']+/);
+        const pronunciationMatch = line.match(/\/[^\/]+?\/|\[[^\]]+?\]/g);
+        const typeMatch = line.match(/(n|v|adj|adv|pron)\./g);
+        const meaningMatch = line.match(/[\u4e00-\u9fa5].*/g);
+        // 如果匹配到新单词，保存之前的记录
+        if (wordMatch) {
+          if (currentWord) {
+            data.push([currentWord, currentPronunciation, currentType, currentMeaning]);
+          }
+          currentWord = wordMatch[0];
+          currentPronunciation = pronunciationMatch ? pronunciationMatch.join(', ') : '';
+          currentType = typeMatch ? typeMatch[0] : '';
+          currentMeaning = meaningMatch ? meaningMatch[0] : '';
+        } else {
+          // 可能是换行，继续拼接中文解释
+          currentMeaning += line.trim();
+        }
+      });
+
+      // 保存最后一条记录
+      if (currentWord) {
+        data.push([currentWord, currentPronunciation, currentType, currentMeaning]);
+      }
+
+      return data;
+    }
+  </script>
+</body>
+
+</html>
